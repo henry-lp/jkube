@@ -116,21 +116,16 @@ public class EcrExtendedAuth {
     }
 
     private JsonObject executeRequest(CloseableHttpClient client, HttpPost request) throws IOException {
-        try {
-            CloseableHttpResponse response = client.execute(request);
-            int statusCode = response.getStatusLine().getStatusCode();
-            logger.debug("Response status %d", statusCode);
-            if (statusCode != HttpStatus.SC_OK) {
-                throw new IOException("AWS authentication failure");
-            }
-
-            HttpEntity entity = response.getEntity();
-            Reader jr = new InputStreamReader(entity.getContent(), StandardCharsets.UTF_8);
-            return new Gson().fromJson(jr, JsonObject.class);
-        }
-        finally {
-            client.close();
-        }
+		try (Reader jr = new InputStreamReader(entity.getContent(), StandardCharsets.UTF_8)) {
+			CloseableHttpResponse response = client.execute(request);
+			int statusCode = response.getStatusLine().getStatusCode();
+			logger.debug("Response status %d", statusCode);
+			if (statusCode != HttpStatus.SC_OK) {
+				throw new IOException("AWS authentication failure");
+			}
+			HttpEntity entity = response.getEntity();
+			return new Gson().fromJson(jr, com.google.gson.JsonObject.class);
+		}
     }
 
     HttpPost createSignedRequest(AuthConfig localCredentials, Date time) {
